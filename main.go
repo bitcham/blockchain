@@ -5,14 +5,19 @@ import "fmt"
 func printChain(c Chain) {
 	for _, b := range c {
 		fmt.Printf("  #%d  prev=%s\n", b.Index, short(b.PrevHash))
-		fmt.Printf("       data=%q\n", b.Data)
+		if b.Index == 0 {
+			fmt.Printf("       (genesis)\n")
+		} else {
+			fmt.Printf("       tx=%s -> %s amount=%d\n", short(b.Tx.From), short(b.Tx.To), b.Tx.Amount)
+			fmt.Printf("       sig=%s\n", short(b.Tx.Signature))
+		}
 		fmt.Printf("       hash=%s\n", short(b.Hash))
 	}
 }
 
 func short(h string) string {
 	if h == "" {
-		return "(genesis)"
+		return "(empty)"
 	}
 	if len(h) < 12 {
 		return h
@@ -32,18 +37,35 @@ func report(label string, c Chain) {
 }
 
 func main() {
-	chain := NewChain("genesis")
-	chain = chain.Add("alice sends 10 to bob")
-	chain = chain.Add("bob sends 4 to carol")
-	// 3 chain blocks
+	alice, err := NewKeyPair()
+	if err != nil {
+		panic(err)
+	}
+	bob, err := NewKeyPair()
+	if err != nil {
+		panic(err)
+	}
+	mallory, err := NewKeyPair()
+	if err != nil {
+		panic(err)
+	}
 
-	report("honest chain", chain)
+	chain := NewChain()
+	chain = chain.Add(NewTx(alice, bob.Address(), 10))
+	chain = chain.Add(NewTx(bob, alice.Address(), 4))
 
-	tampered := make(Chain, len(chain))
-	copy(tampered, chain)
-	tampered[1].Data = "alice sends 11 to bob"
-	report("tamper block 1 data, leave hashes", tampered)
+	report("honest signed chain", chain)
 
-	tampered[1].Hash = tampered[1].computeHash()
-	report("same tamper, but recompute only block 1 hash", tampered)
+	edited := make(Chain, len(chain))
+	copy(edited, chain)
+	edited[1].Tx.To = mallory.Address()
+	edited[1].Hash = edited[1].computeHash()
+	report("change destination, recompute block hash, keep Alice's signature", edited)
+
+	forged := make(Chain, len(chain))
+	copy(forged, chain)
+	forged[1].Tx.To = mallory.Address()
+	forged[1].Tx.Signature = mallory.Sign(forged[1].Tx.payload())
+	forged[1].Hash = forged[1].computeHash()
+	report("same edit, but Mallory signs while From is still Alice", forged)
 }

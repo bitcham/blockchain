@@ -4,13 +4,13 @@ import "fmt"
 
 type Chain []Block
 
-func NewChain(genesisData string) Chain {
-	return Chain{NewGenesis(genesisData)}
+func NewChain() Chain {
+	return Chain{NewGenesis()}
 }
 
-func (c Chain) Add(data string) Chain {
+func (c Chain) Add(tx Tx) Chain {
 	prev := c[len(c)-1]
-	return append(c, NewBlock(prev, data))
+	return append(c, NewBlock(prev, tx))
 }
 
 func (c Chain) IsValid() error {
@@ -25,6 +25,9 @@ func (c Chain) IsValid() error {
 	if genesis.Hash != genesis.computeHash() {
 		return fmt.Errorf("block 0: stored hash does not match contents")
 	}
+	if genesis.Tx != (Tx{}) {
+		return fmt.Errorf("block 0 must not contain a transaction")
+	}
 
 	for i := 1; i < len(c); i++ {
 		prev := c[i-1]
@@ -38,6 +41,9 @@ func (c Chain) IsValid() error {
 		}
 		if curr.PrevHash != prev.Hash {
 			return fmt.Errorf("block %d: prev_hash does not match previous block", i)
+		}
+		if err := curr.Tx.IsValid(); err != nil {
+			return fmt.Errorf("block %d: %w", i, err)
 		}
 	}
 	return nil
