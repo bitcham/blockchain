@@ -30,12 +30,12 @@ Never combine theory + full implementation + the next topic in one turn.
 | 1. Hash | Same data → same fingerprint; a tiny edit changes it | **Done** — `hash.go` |
 | 2. Linked blocks | `PrevHash` + recompute `Hash`; genesis is **block 0** | **Done** — `block.go`, `chain.go`, `main.go` |
 | 3. Signatures | Who authorized this payload? Hash ≠ identity | **Done** — `keys.go`, `tx.go`; `IsValid` checks signatures |
-| 4. Balances / double-spend | Signature ≠ having the coins | Not started |
+| 4. Balances / double-spend | Signature ≠ having the coins | **Theory given, quiz not answered, not in code** |
 | 5. Proof-of-work | Cost to append / rewrite | Not started |
 | 6. Node HTTP (local) | Inspect chain / submit tx on one machine | Not started |
 | Later | P2P, real consensus, Solidity / dApp | Out of scope until they ask |
 
-**You are at Step 3 (code done).** Next is Step 4 theory (balances / double-spend) when they ask. Do not add mining or a network yet.
+**You are at Step 4.** Next: grade their quiz if they answer, or implement balances in Go if they ask for code. Do not add mining or a network in Step 4.
 
 Address = hex of the ed25519 public key. `From` is that address; `Verify` uses it as the public key. Genesis has no `Tx`.
 
